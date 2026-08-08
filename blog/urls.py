@@ -1,7 +1,13 @@
+# blog/urls.py
+from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import BlogPostViewSet
 
-router = DefaultRouter()
-router.register('', BlogPostViewSet, basename='blog-post')
+app_name = 'blog'
 
-urlpatterns = router.urls
+router = DefaultRouter()
+router.register('posts', BlogPostViewSet, basename='blog-post')
+
+urlpatterns = [
+    path('', include(router.urls)),
+]

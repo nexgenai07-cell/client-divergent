@@ -7,6 +7,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('website.urls')),
     path('api/blog/', include('blog.urls')),
+       path('api/projects/', include('projects.urls')),  # <-- Add this
+        path('api/about/', include('about.urls')),
+         path('api/platform/', include('platformm.urls')), 
 ]
 
 if settings.DEBUG:

@@ -1,152 +1,222 @@
+# website/models.py
 from django.db import models
+from django.utils.text import slugify
 
-
-class Page(models.Model):
-    name = models.SlugField(unique=True)  # home, wireless, about, platform
-    title = models.CharField(max_length=255)
-    meta_description = models.TextField(blank=True)
-    is_active = models.BooleanField(default=True)
-    order = models.PositiveIntegerField(default=0)
-
-    class Meta:
-        ordering = ['order']
-
-    def __str__(self):
-        return self.title
-
-
-class Section(models.Model):
-    SECTION_TYPES = [
-        ('hero', 'Hero'),
-        ('problem', 'Problem Framing'),
-        ('stats', 'Stats'),
-        ('field_notes', 'Field Notes'),
-        ('services', 'Services'),
-        ('case_study', 'Case Study'),
-        ('assets', 'Assets'),
-        ('how_we_work', 'How We Work'),
-        ('why_us', 'Why Us'),
-        ('demo', 'Demonstration'),
-        ('faq', 'FAQ'),
-        ('cta', 'CTA'),
-        ('about', 'About / Team'),
-        ('logos', 'Company Logos'),
-        ('custom', 'Custom'),
-    ]
-
-    page = models.ForeignKey(Page, related_name='sections', on_delete=models.CASCADE)
-    section_type = models.CharField(max_length=30, choices=SECTION_TYPES)
-    name = models.CharField(max_length=255)  # dynamic display label
-    heading = models.CharField(max_length=500, blank=True)
-    subheading = models.TextField(blank=True)
-    button_text = models.CharField(max_length=100, blank=True)
-    button_link = models.CharField(max_length=500, blank=True)
-    image = models.ImageField(upload_to='sections/', blank=True, null=True)
-    video_url = models.URLField(blank=True)
-    extra_data = models.JSONField(blank=True, null=True, default=dict)
-    order = models.PositiveIntegerField(default=0)
-    is_active = models.BooleanField(default=True)
-
-    class Meta:
-        ordering = ['order']
-
-    def __str__(self):
-        return f"{self.page.name} - {self.name}"
-
-
-class SectionItem(models.Model):
-    section = models.ForeignKey(Section, related_name='items', on_delete=models.CASCADE)
-    title = models.CharField(max_length=500, blank=True)
-    description = models.TextField(blank=True)
-    name = models.CharField(max_length=255, blank=True)   # person name (testimonials/team)
-    role = models.CharField(max_length=255, blank=True)   # person role/title
-    image = models.ImageField(upload_to='section_items/', blank=True, null=True)
-    link = models.CharField(max_length=500, blank=True)
-    order = models.PositiveIntegerField(default=0)
-    is_active = models.BooleanField(default=True)
-    extra_data = models.JSONField(blank=True, null=True, default=dict)
-
-    class Meta:
-        ordering = ['order']
-
-    def __str__(self):
-        return self.title or self.name or f"Item {self.pk}"
-
-
-class NavLink(models.Model):
-    LOCATION_CHOICES = [('nav', 'Navigation'), ('footer', 'Footer')]
-
-    label = models.CharField(max_length=100)
-    link = models.CharField(max_length=500)
-    location = models.CharField(max_length=10, choices=LOCATION_CHOICES, default='nav')
-    order = models.PositiveIntegerField(default=0)
-    is_active = models.BooleanField(default=True)
-
-    class Meta:
-        ordering = ['order']
-
-    def __str__(self):
-        return f"{self.get_location_display()} - {self.label}"
-
-
-class PricingPlan(models.Model):
-    section = models.ForeignKey(
-        Section, related_name='pricing_plans', on_delete=models.CASCADE,
-        blank=True, null=True
-    )
-    name = models.CharField(max_length=100)
-    price = models.CharField(max_length=100, blank=True)  # "Custom", "$499/mo", etc.
-    description = models.TextField(blank=True)
-    features = models.JSONField(default=list, blank=True)  # list of strings
-    button_text = models.CharField(max_length=100, blank=True)
-    button_link = models.CharField(max_length=500, blank=True)
-    is_featured = models.BooleanField(default=False)
-    order = models.PositiveIntegerField(default=0)
-    is_active = models.BooleanField(default=True)
-
-    class Meta:
-        ordering = ['order']
-
-    def __str__(self):
-        return self.name
-
-
-class SiteSettings(models.Model):
-    site_name = models.CharField(max_length=255, default="Divergent Physics")
-    logo = models.ImageField(upload_to='site/', blank=True, null=True)
-    calendar_link = models.URLField(blank=True)
-    copyright_text = models.CharField(max_length=255, blank=True)
-    social_links = models.JSONField(blank=True, null=True, default=dict)
-
-    class Meta:
-        verbose_name = "Site Settings"
-        verbose_name_plural = "Site Settings"
-
-    def save(self, *args, **kwargs):
-        self.pk = 1
-        super().save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        pass
-
-    @classmethod
-    def load(cls):
-        obj, _ = cls.objects.get_or_create(pk=1)
-        return obj
-
-    def __str__(self):
-        return self.site_name
-
-
-class Lead(models.Model):
-    company_name = models.CharField(max_length=255)
-    email = models.EmailField()
-    solver_used = models.CharField(max_length=255, blank=True)
-    workflow_description = models.TextField(blank=True)
+class BaseModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
-
+    updated_at = models.DateTimeField(auto_now=True)
+    
     class Meta:
-        ordering = ['-created_at']
+        abstract = True
 
+class HeroSection(BaseModel):
+    title = models.CharField(max_length=200, blank=True, null=True)
+    subtitle = models.TextField(blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    built_by = models.TextField(blank=True, null=True)
+    call_to_action_1 = models.CharField(max_length=100, blank=True, null=True)
+    call_to_action_2 = models.CharField(max_length=100, blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    order = models.IntegerField(default=1)
+    
     def __str__(self):
-        return f"{self.company_name} - {self.email}"
+        return self.title if self.title else f"Hero #{self.id}"
+
+class PipelineStep(BaseModel):
+    hero_section = models.ForeignKey(HeroSection, on_delete=models.CASCADE, related_name='pipeline_steps')
+    step_name = models.CharField(max_length=50, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    icon = models.CharField(max_length=50, blank=True, null=True)
+    order = models.IntegerField(default=1)
+    
+    def __str__(self):
+        return self.step_name if self.step_name else f"Step #{self.id}"
+
+class ProblemStatement(BaseModel):
+    heading = models.CharField(max_length=200, blank=True, null=True)
+    sub_heading = models.CharField(max_length=200, blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return self.heading if self.heading else f"Problem #{self.id}"
+
+class ProblemQuote(BaseModel):
+    problem_statement = models.ForeignKey(ProblemStatement, on_delete=models.CASCADE, related_name='quotes')
+    quote_text = models.TextField(blank=True, null=True)
+    author = models.CharField(max_length=100, blank=True, null=True)
+    author_title = models.CharField(max_length=100, blank=True, null=True)
+    order = models.IntegerField(default=1)
+    
+    def __str__(self):
+        return self.author if self.author else f"Quote #{self.id}"
+
+class Statistic(BaseModel):
+    heading = models.CharField(max_length=200, blank=True, null=True)
+    sub_heading = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return self.heading if self.heading else f"Stats #{self.id}"
+
+class StatItem(BaseModel):
+    statistic = models.ForeignKey(Statistic, on_delete=models.CASCADE, related_name='stats')
+    value = models.CharField(max_length=50, blank=True, null=True)
+    label = models.TextField(blank=True, null=True)
+    order = models.IntegerField(default=1)
+    
+    def __str__(self):
+        return self.value if self.value else f"Stat #{self.id}"
+
+class FieldNote(BaseModel):
+    heading = models.CharField(max_length=200, blank=True, null=True)
+    sub_heading = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return self.heading if self.heading else f"Field Note #{self.id}"
+
+class FieldNoteItem(BaseModel):
+    field_note = models.ForeignKey(FieldNote, on_delete=models.CASCADE, related_name='notes')
+    quote = models.TextField(blank=True, null=True)
+    author = models.CharField(max_length=100, blank=True, null=True)
+    author_title = models.CharField(max_length=100, blank=True, null=True)
+    order = models.IntegerField(default=1)
+    
+    def __str__(self):
+        return self.author if self.author else f"Note #{self.id}"
+
+class ServiceSection(BaseModel):
+    heading = models.CharField(max_length=200, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return self.heading if self.heading else f"Service Section #{self.id}"
+
+class ServiceCard(BaseModel):
+    service_section = models.ForeignKey(ServiceSection, on_delete=models.CASCADE, related_name='services')
+    heading = models.CharField(max_length=200, blank=True, null=True, help_text="Card heading/title")
+    description = models.TextField(blank=True, null=True, help_text="Card main description")
+    icon = models.CharField(max_length=100, blank=True, null=True, help_text="Font Awesome icon class (e.g., 'fas fa-robot')")
+    image = models.ImageField(upload_to='services/', blank=True, null=True, help_text="Card image (optional)")
+    points = models.TextField(blank=True, null=True, help_text="Enter each point separated by newline")
+    order = models.IntegerField(default=1)
+    is_active = models.BooleanField(default=True)
+    
+    def get_points_list(self):
+        """Return points as a list"""
+        if self.points:
+            return [p.strip() for p in self.points.split('\n') if p.strip()]
+        return []
+    
+    def __str__(self):
+        return self.heading if self.heading else f"Service Card #{self.id}"
+
+class CaseStudy(BaseModel):
+    heading = models.CharField(max_length=200, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return self.heading if self.heading else f"Case Study #{self.id}"
+
+class CaseStudyCard(BaseModel):
+    case_study = models.ForeignKey(CaseStudy, on_delete=models.CASCADE, related_name='cards')
+    title = models.CharField(max_length=100, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    image = models.ImageField(upload_to='case_studies/', blank=True, null=True)
+    order = models.IntegerField(default=1)
+    
+    def __str__(self):
+        return self.title if self.title else f"Case Card #{self.id}"
+
+class AssetSection(BaseModel):
+    heading = models.CharField(max_length=200, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return self.heading if self.heading else f"Asset #{self.id}"
+
+class AssetItem(BaseModel):
+    asset_section = models.ForeignKey(AssetSection, on_delete=models.CASCADE, related_name='assets')
+    title = models.CharField(max_length=100, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    image = models.ImageField(upload_to='assets/', blank=True, null=True)
+    order = models.IntegerField(default=1)
+    
+    def __str__(self):
+        return self.title if self.title else f"Asset Item #{self.id}"
+
+class HowWeWork(BaseModel):
+    heading = models.CharField(max_length=200, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return self.heading if self.heading else f"How We Work #{self.id}"
+
+class HowWeWorkStep(BaseModel):
+    how_we_work = models.ForeignKey(HowWeWork, on_delete=models.CASCADE, related_name='steps')
+    step_number = models.IntegerField(default=0)
+    title = models.CharField(max_length=100, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    image = models.ImageField(upload_to='steps/', blank=True, null=True)
+    order = models.IntegerField(default=1)
+    
+    def __str__(self):
+        return f"Step {self.step_number}: {self.title if self.title else ''}"
+
+class WhyUsSection(BaseModel):
+    heading = models.CharField(max_length=200, blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return self.heading if self.heading else f"Why Us #{self.id}"
+
+class WhyUsCard(BaseModel):
+    why_us_section = models.ForeignKey(WhyUsSection, on_delete=models.CASCADE, related_name='cards')
+    number = models.CharField(max_length=10, blank=True, null=True)
+    title = models.CharField(max_length=100, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    order = models.IntegerField(default=1)
+    
+    def __str__(self):
+        return self.title if self.title else f"Why Us Card #{self.id}"
+
+class OurPlatform(BaseModel):
+    heading = models.CharField(max_length=200, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return self.heading if self.heading else f"Platform #{self.id}"
+
+class PlatformFeature(BaseModel):
+    platform = models.ForeignKey(OurPlatform, on_delete=models.CASCADE, related_name='features')
+    title = models.CharField(max_length=100, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    image = models.ImageField(upload_to='platform/', blank=True, null=True)
+    order = models.IntegerField(default=1)
+    
+    def __str__(self):
+        return self.title if self.title else f"Feature #{self.id}"
+
+class FAQ(BaseModel):
+    question = models.TextField(blank=True, null=True)
+    answer = models.TextField(blank=True, null=True)
+    order = models.IntegerField(default=1)
+    is_active = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return self.question[:50] if self.question else f"FAQ #{self.id}"
+
+class GetStartedSection(BaseModel):
+    heading = models.CharField(max_length=200, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    image = models.ImageField(upload_to='get_started/', blank=True, null=True)
+    call_to_action = models.CharField(max_length=100, blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return self.heading if self.heading else f"Get Started #{self.id}"

@@ -1,66 +1,148 @@
+# website/serializers.py
 from rest_framework import serializers
-from .models import Page, Section, SectionItem, NavLink, SiteSettings, PricingPlan, Lead
+from .models import *
 
-
-class SectionItemSerializer(serializers.ModelSerializer):
+class HeroSectionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = SectionItem
+        model = HeroSection
+        fields = '__all__'
+
+class PipelineStepSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PipelineStep
+        fields = '__all__'
+
+class ProblemQuoteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProblemQuote
+        fields = '__all__'
+
+class ProblemStatementSerializer(serializers.ModelSerializer):
+    quotes = ProblemQuoteSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = ProblemStatement
+        fields = '__all__'
+
+class StatItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StatItem
+        fields = '__all__'
+
+class StatisticSerializer(serializers.ModelSerializer):
+    stats = StatItemSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Statistic
+        fields = '__all__'
+
+class FieldNoteItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FieldNoteItem
+        fields = '__all__'
+
+class FieldNoteSerializer(serializers.ModelSerializer):
+    notes = FieldNoteItemSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = FieldNote
+        fields = '__all__'
+
+class ServiceCardSerializer(serializers.ModelSerializer):
+    points_list = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ServiceCard
         fields = [
-            'id', 'title', 'description', 'name', 'role',
-            'image', 'link', 'order', 'extra_data',
+            'id', 
+            'heading', 
+            'description', 
+            'icon', 
+            'image', 
+            'points',
+            'points_list',
+            'order',
+            'is_active',
+            'created_at',
+            'updated_at'
         ]
+    
+    def get_points_list(self, obj):
+        return obj.get_points_list()
 
-
-class PricingPlanSerializer(serializers.ModelSerializer):
+class ServiceSectionSerializer(serializers.ModelSerializer):
+    services = ServiceCardSerializer(many=True, read_only=True)
+    
     class Meta:
-        model = PricingPlan
-        fields = [
-            'id', 'name', 'price', 'description', 'features',
-            'button_text', 'button_link', 'is_featured', 'order',
-        ]
+        model = ServiceSection
+        fields = ['id', 'heading', 'description', 'is_active', 'services', 'created_at', 'updated_at']
 
-
-class SectionSerializer(serializers.ModelSerializer):
-    items = SectionItemSerializer(many=True, read_only=True)
-    pricing_plans = PricingPlanSerializer(many=True, read_only=True)
-
+class CaseStudyCardSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Section
-        fields = [
-            'id', 'page', 'section_type', 'name', 'heading', 'subheading',
-            'button_text', 'button_link', 'image', 'video_url',
-            'extra_data', 'order', 'items', 'pricing_plans',
-        ]
+        model = CaseStudyCard
+        fields = '__all__'
 
-
-class PageSerializer(serializers.ModelSerializer):
+class CaseStudySerializer(serializers.ModelSerializer):
+    cards = CaseStudyCardSerializer(many=True, read_only=True)
+    
     class Meta:
-        model = Page
-        fields = ['id', 'name', 'title', 'meta_description', 'order']
+        model = CaseStudy
+        fields = '__all__'
 
-
-class PageDetailSerializer(serializers.ModelSerializer):
-    sections = SectionSerializer(many=True, read_only=True)
-
+class AssetItemSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Page
-        fields = ['id', 'name', 'title', 'meta_description', 'order', 'sections']
+        model = AssetItem
+        fields = '__all__'
 
-
-class NavLinkSerializer(serializers.ModelSerializer):
+class AssetSectionSerializer(serializers.ModelSerializer):
+    assets = AssetItemSerializer(many=True, read_only=True)
+    
     class Meta:
-        model = NavLink
-        fields = ['id', 'label', 'link', 'location', 'order']
+        model = AssetSection
+        fields = '__all__'
 
-
-class SiteSettingsSerializer(serializers.ModelSerializer):
+class HowWeWorkStepSerializer(serializers.ModelSerializer):
     class Meta:
-        model = SiteSettings
-        fields = ['site_name', 'logo', 'calendar_link', 'copyright_text', 'social_links']
+        model = HowWeWorkStep
+        fields = '__all__'
 
-
-class LeadSerializer(serializers.ModelSerializer):
+class HowWeWorkSerializer(serializers.ModelSerializer):
+    steps = HowWeWorkStepSerializer(many=True, read_only=True)
+    
     class Meta:
-        model = Lead
-        fields = ['id', 'company_name', 'email', 'solver_used', 'workflow_description', 'created_at']
-        read_only_fields = ['id', 'created_at']
+        model = HowWeWork
+        fields = '__all__'
+
+class WhyUsCardSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WhyUsCard
+        fields = '__all__'
+
+class WhyUsSectionSerializer(serializers.ModelSerializer):
+    cards = WhyUsCardSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = WhyUsSection
+        fields = '__all__'
+
+class PlatformFeatureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlatformFeature
+        fields = '__all__'
+
+class OurPlatformSerializer(serializers.ModelSerializer):
+    features = PlatformFeatureSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = OurPlatform
+        fields = '__all__'
+
+class FAQSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FAQ
+        fields = '__all__'
+
+class GetStartedSectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GetStartedSection
+        fields = '__all__'

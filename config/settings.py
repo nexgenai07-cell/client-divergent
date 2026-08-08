@@ -26,6 +26,9 @@ INSTALLED_APPS = [
 
     'website',
     'blog',
+     'projects', 
+     'about',  # <-- Add this 
+       'platformm',  
 ]
 
 MIDDLEWARE = [
