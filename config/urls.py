@@ -10,6 +10,7 @@ urlpatterns = [
        path('api/projects/', include('projects.urls')),  # <-- Add this
         path('api/about/', include('about.urls')),
          path('api/platform/', include('platformm.urls')), 
+          path('api/site-settings/', include('sitesettings.urls')), 
 ]
 
 if settings.DEBUG:
