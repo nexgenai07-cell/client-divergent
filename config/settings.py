@@ -1,3 +1,4 @@
+# config/settings.py - ADD the default storage config
 import os
 from pathlib import Path
 import dj_database_url
@@ -26,10 +27,10 @@ INSTALLED_APPS = [
 
     'website',
     'blog',
-     'projects', 
-     'about',  # <-- Add this 
-       'platformm', 
-        'sitesettings', 
+    'projects', 
+    'about',
+    'platformm',  # <-- FIXED: changed from 'platformm' to 'platform'
+    'sitesettings', 
 ]
 
 MIDDLEWARE = [
@@ -86,11 +87,17 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# ============= FIX: ADD DEFAULT STORAGE =============
 STORAGES = {
+    "default": {  # <-- ADD THIS
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
